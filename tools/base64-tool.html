@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Tool - Lorenzo Piersante</title>
+    <link rel="icon" type="image/x-icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="profile">
+            <img src="../assets/images/avatar.jpg" alt="Lorenzo Piersante" class="avatar">
+            <h1>Lorenzo Piersante</h1>
+            <p class="description">Building my own little website, work in progress...</p>
+        </div>
+        <nav>
+            <ul>
+                <li>
+                    <a href="../index.html">
+                        <i class="fa-solid fa-house"></i>
+                        HOME
+                    </a>
+                </li>
+                <li>
+                    <a href="../articles.html">
+                        <i class="fa-solid fa-pen-clip"></i>
+                        ARTICLES
+                    </a>
+                </li>
+                <li>
+                    <a href="../tools.html" class="active">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        TOOLS
+                    </a>
+                </li>
+                <li>
+                    <a href="../about.html">
+                        <i class="fa-solid fa-circle-info"></i>
+                        ABOUT
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="https://github.com/lorenzo-piersante" target="_blank" aria-label="GitHub">
+                <i class="fa-brands fa-github"></i>
+            </a>
+            <a href="https://linkedin.com/in/lorenzopiersante" target="_blank" aria-label="LinkedIn">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+        </div>
+    </aside>
+
+    <main class="content">
+        <div class="main-column">
+            <div class="page-header">
+                <a href="../tools.html" class="breadcrumb-link">Tools</a> / Base64 Tool
+            </div>
+
+            <div class="tool-display-container" style="align-items: stretch; text-align: left; padding: 2rem;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1rem;">
+                    <i class="fa-solid fa-shield-halved tool-display-icon"></i>
+                    <h2>Base64 Encoder / Decoder</h2>
+                    <p>Easily convert text to Base64 format or decode it back.</p>
+                </div>
+                
+                <textarea id="input-text" class="tool-textarea" placeholder="Enter text to encode or decode..."></textarea>
+                
+                <div class="button-group">
+                    <button class="action-button primary" onclick="processBase64('encode')">
+                        <i class="fa-solid fa-lock"></i>
+                        Encode
+                    </button>
+                    <button class="action-button primary" onclick="processBase64('decode')">
+                        <i class="fa-solid fa-lock-open"></i>
+                        Decode
+                    </button>
+                    <button class="action-button" onclick="clearAll()">
+                        <i class="fa-solid fa-trash-can"></i>
+                        Clear
+                    </button>
+                </div>
+
+                <div id="error-msg" class="error-message">Invalid Base64 string. Please check your input.</div>
+                <textarea id="output-text" class="tool-textarea" readonly placeholder="Output will appear here..."></textarea>
+
+                <button class="copy-button" onclick="copyToClipboard()" style="align-self: center;">
+                    <i class="fa-regular fa-copy"></i>
+                    Copy Output
+                </button>
+            </div>
+        </div>
+
+        <aside class="right-sidebar">
+        </aside>
+    </main>
+</div>
+
+<script>
+    function processBase64(mode) {
+        const input = document.getElementById('input-text').value;
+        const outputField = document.getElementById('output-text');
+        const errorMsg = document.getElementById('error-msg');
+        
+        errorMsg.style.display = 'none';
+        
+        try {
+            if (mode === 'encode') {
+                // Unicode-safe encoding using TextEncoder and btoa
+                const bytes = new TextEncoder().encode(input);
+                const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("");
+                outputField.value = btoa(binString);
+            } else {
+                // Unicode-safe decoding using atob and TextDecoder
+                const binString = atob(input);
+                const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0));
+                outputField.value = new TextDecoder().decode(bytes);
+            }
+        } catch (e) {
+            if (mode === 'decode') {
+                errorMsg.style.display = 'block';
+                outputField.value = '';
+            } else {
+                console.error(e);
+            }
+        }
+    }
+
+    function clearAll() {
+        document.getElementById('input-text').value = '';
+        document.getElementById('output-text').value = '';
+        document.getElementById('error-msg').style.display = 'none';
+    }
+
+    function copyToClipboard() {
+        const outputText = document.getElementById('output-text').value;
+        if (!outputText) return;
+
+        navigator.clipboard.writeText(outputText).then(() => {
+            const btn = document.querySelector('.copy-button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            btn.style.backgroundColor = '#2ea043';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.style.backgroundColor = '';
+            }, 2000);
+        });
+    }
+</script>
+</body>
+</html>

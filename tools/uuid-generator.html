@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UUID Generator - Lorenzo Piersante</title>
+    <link rel="icon" type="image/x-icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="profile">
+            <img src="../assets/images/avatar.jpg" alt="Lorenzo Piersante" class="avatar">
+            <h1>Lorenzo Piersante</h1>
+            <p class="description">Building my own little website, work in progress...</p>
+        </div>
+        <nav>
+            <ul>
+                <li>
+                    <a href="../index.html">
+                        <i class="fa-solid fa-house"></i>
+                        HOME
+                    </a>
+                </li>
+                <li>
+                    <a href="../articles.html">
+                        <i class="fa-solid fa-pen-clip"></i>
+                        ARTICLES
+                    </a>
+                </li>
+                <li>
+                    <a href="../tools.html" class="active">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        TOOLS
+                    </a>
+                </li>
+                <li>
+                    <a href="../about.html">
+                        <i class="fa-solid fa-circle-info"></i>
+                        ABOUT
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="https://github.com/lorenzo-piersante" target="_blank" aria-label="GitHub">
+                <i class="fa-brands fa-github"></i>
+            </a>
+            <a href="https://linkedin.com/in/lorenzopiersante" target="_blank" aria-label="LinkedIn">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+        </div>
+    </aside>
+
+    <main class="content">
+        <div class="main-column">
+            <div class="page-header">
+                <a href="../tools.html" class="breadcrumb-link">Tools</a> / UUID Generator
+            </div>
+
+            <div class="tool-display-container">
+                <i class="fa-solid fa-fingerprint tool-display-icon"></i>
+                <h2>Universal Unique Identifier (v4)</h2>
+                <p>A new UUID is generated every time you refresh this page.</p>
+                
+                <div id="uuid-display" class="big-id-display">
+                    <!-- UUID will be inserted here -->
+                </div>
+
+                <button class="copy-button" onclick="copyToClipboard()">
+                    <i class="fa-regular fa-copy"></i>
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+
+        <aside class="right-sidebar">
+        </aside>
+    </main>
+</div>
+
+<script>
+    function generateUUID() {
+        document.getElementById('uuid-display').innerText = crypto.randomUUID();
+    }
+
+    function copyToClipboard() {
+        const uuidText = document.getElementById('uuid-display').innerText;
+        navigator.clipboard.writeText(uuidText).then(() => {
+            const btn = document.querySelector('.copy-button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            btn.style.backgroundColor = '#2ea043';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.style.backgroundColor = '';
+            }, 2000);
+        });
+    }
+
+    // Generate on load
+    window.onload = generateUUID;
+</script>
+</body>
+</html>
