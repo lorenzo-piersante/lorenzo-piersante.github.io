@@ -23,48 +23,6 @@ body {
     max-width: 800px;
 }
 
-.right-sidebar {
-    width: 240px;
-    padding-left: 2rem;
-    padding-top: 4rem;
-    display: none;
-}
-
-@media (min-width: 1200px) {
-    .right-sidebar {
-        display: block;
-    }
-}
-
-.tags-card h3 {
-    font-size: 0.85rem;
-    color: #8b949e;
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-}
-
-.tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.tag {
-    background-color: #252529;
-    border: 1px solid #30363d;
-    color: #8b949e;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    text-decoration: none;
-    transition: color 0.2s, border-color 0.2s;
-}
-
-.tag:hover {
-    border-color: #58a6ff;
-    color: #efefef;
-}
-
 .sidebar {
     width: 260px;
     box-sizing: border-box;
