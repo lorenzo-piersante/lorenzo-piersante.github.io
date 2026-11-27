@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five Minutes, One Pull Request: A Tiny AI Automation Experiment - Lorenzo Piersante</title>
+    <link rel="icon" type="image/x-icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="profile">
+            <img src="../assets/images/avatar.jpg" alt="Lorenzo Piersante" class="avatar">
+            <h1>Lorenzo Piersante</h1>
+            <p class="description">Building my own little website, work in progress...</p>
+        </div>
+        <nav>
+            <ul>
+                <li>
+                    <a href="../index.html">
+                        <i class="fa-solid fa-house"></i>
+                        HOME
+                    </a>
+                </li>
+                <li>
+                    <a href="../articles.html" class="active">
+                        <i class="fa-solid fa-pen-clip"></i>
+                        ARTICLES
+                    </a>
+                </li>
+                <li>
+                    <a href="../tools.html">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        TOOLS
+                    </a>
+                </li>
+                <li>
+                    <a href="../about.html">
+                        <i class="fa-solid fa-circle-info"></i>
+                        ABOUT
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="https://github.com/lorenzo-piersante" target="_blank" aria-label="GitHub">
+                <i class="fa-brands fa-github"></i>
+            </a>
+            <a href="https://linkedin.com/in/lorenzopiersante" target="_blank" aria-label="LinkedIn">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+        </div>
+    </aside>
+
+    <main class="content">
+        <div class="main-column">
+            <div class="page-header">
+                <a href="../articles.html" class="breadcrumb-link">Articles</a> / AI Automation Experiments
+            </div>
+
+            <article class="article-page">
+                <header class="article-header">
+                    <h1>Five Minutes, One Pull Request: A Tiny AI Automation Experiment</h1>
+                    <div class="article-meta">
+                        <span>
+                            <i class="fa-regular fa-calendar"></i>
+                            Nov 27, 2026
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-tags"></i>
+                            AI, Automation, Programming
+                        </span>
+                        <span>
+                            <i class="fa-regular fa-clock"></i>
+                            6 min read
+                        </span>
+                    </div>
+                </header>
+
+                <div class="article-body">
+                    <p class="article-lead">
+                        The story I like to tell is that I went to bed with an empty branch and woke up to a pull
+                        request. Not a big one — a new tool page, a stylesheet, a script, and a card on an index —
+                        but it was mine, and I hadn't written any of it while awake.
+                    </p>
+
+                    <p>
+                        The real version is less cinematic. The whole run took about five minutes on a quiet
+                        afternoon, and I was very much awake for it. I mention that up front because it is the
+                        most honest way to frame the experiment: this is not a story about an autonomous
+                        workforce. It is a story about one small issue, one short loop, and a result I was happy
+                        to merge.
+                    </p>
+
+                    <p>
+                        This site is a small personal project: a handful of browser tools, a few notes, and
+                        whatever I happen to be tinkering with. I don't have a dramatic backlog. The issue tracker
+                        usually holds a couple of small ideas at most, which makes it a low-stakes place to try
+                        something like this.
+                    </p>
+
+                    <p>
+                        The question was not whether an agent could replace a sprint. It was much narrower: can a
+                        coding agent take one small, well-specified issue and turn it into a change I would
+                        actually merge? The experiment needed three pieces: a way to read the queue, a loop to
+                        work through it, and a playbook so the result looked like it belonged on the site.
+                    </p>
+
+                    <h2>The engine</h2>
+
+                    <p>
+                        The first piece is a skill called <code>github-issues</code>. It is almost embarrassingly
+                        small: a Markdown file that tells the agent to run <code>gh issue list</code> and display
+                        the results in a readable format. That is the entire reader.
+                    </p>
+
+                    <p>
+                        The second piece is <code>bin/nightwatch.sh</code>, a shell script that refuses to start
+                        on a dirty working tree, creates a timestamped branch, and runs the agent in a loop.
+                    </p>
+
+<pre><code>#!/usr/bin/env bash
+
+set -e
+
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Working directory is dirty. Commit or stash changes first."
+    exit 1
+fi
+
+ITERATIONS=${1:-10}
+BRANCH="overnight-batch-$(date +%Y%m%d-%H%M%S)"
+
+git checkout main
+git pull origin main
+git checkout -b "$BRANCH"
+
+echo "Working on branch: $BRANCH"
+
+for ((i=1; i&lt;=ITERATIONS; i++)); do
+    echo "=== Iteration $i of $ITERATIONS ==="
+
+    opencode run --auto -m opencode/deepseek-v4.1-flash-free "$(cat &lt;&lt;'EOF'
+1. Use the github-issues skill to fetch all open issues from this repository.
+2. Run `git log main..HEAD --oneline` to see which issues were already handled on this branch. Commits use the format `ISSUE #&lt;number&gt;: &lt;description&gt;`.
+3. Filter out every issue whose number already appears in that log.
+4. If no issues remain after filtering, create `.nightwatch-complete` and exit.
+5. From the remaining issues, choose ONE that seems most appropriate to work on next. You must ONLY CHOOSE ONE.
+6. Implement the fix or feature for that issue.
+7. Commit with message format: `ISSUE #&lt;issue-number&gt;: &lt;short-description&gt;` and in the body mark that it closes the related issue on GitHub.
+EOF
+)"
+
+    git push -u origin "$BRANCH"
+
+    # Check for completion
+    if [ -f .nightwatch-complete ]; then
+        echo "All issues complete after $i iterations."
+        rm -f .nightwatch-complete
+        echo "Review with: git log main..$BRANCH"
+        exit 0
+    fi
+done
+
+echo "Reached max iterations ($ITERATIONS). Review with: git log main..$BRANCH"</code></pre>
+
+                    <p>
+                        Two details matter more than the rest. First, the agent is told to pick exactly one issue
+                        per iteration. Not a batch, not a roadmap — one. That keeps each commit small enough to
+                        review in a couple of minutes, which is the only reason a short automated run is useful at all.
+                    </p>
+
+                    <p>
+                        Second, the loop has no database. It runs <code>git log main..HEAD --oneline</code> and
+                        treats commit messages such as <code>ISSUE #1: ...</code> as the ledger of what is already
+                        done. The queue and the history are the same object. It is a little hacky, and it works
+                        surprisingly well.
+                    </p>
+
+                    <p>
+                        There is also a stop condition: when no issues remain, the agent creates a marker file and
+                        the script exits. Crude, but enough for a personal project. The point was never to remove
+                        myself from the process — it was to move my attention from typing to reviewing, which is
+                        where I add more value anyway.
+                    </p>
+
+                    <h2>The playbook</h2>
+
+                    <p>
+                        The third piece is the one I am most pleased with. Before letting anything run unattended,
+                        I wrote a skill called <code>new-tool</code>. A skill is just a set of instructions the
+                        agent can load when a task matches, and this one describes, step by step, how a tool gets
+                        added to the site.
+                    </p>
+
+<pre><code>---
+name: new-tool
+description: Creates a new tool page for this site. Use when asked to build, add, or develop a new tool. Creates tools/&lt;slug&gt;.html, adds any needed CSS/JS assets, and links the tool from tools.html.
+---
+
+# New Tool
+
+Create a self-contained, responsive tool page and register it on the tools index.
+
+[...]
+
+- Reuse existing classes from `assets/css/style.css` before adding new ones.
+- If the tool needs a few very specific styles, create `assets/css/&lt;slug&gt;.css` and link it after `style.css` (per `AGENTS.md`, do not bloat the main stylesheet).
+- Put tool JavaScript in `assets/js/&lt;slug&gt;.js` (per `AGENTS.md`, do not inline scripts in new pages). Use `defer` and query elements by ID.
+- Ensure it works on mobile: stack inputs, avoid fixed widths, test narrow viewports.</code></pre>
+
+                    <p>
+                        Without it, every generated page would invent its own layout, inline its own styles, and
+                        forget the navigation. With it, the output is boring — and boring is exactly what you want
+                        from an unattended process. Consistency is not a limitation here;
+                        it is the feature.
+                    </p>
+
+                    <h2>The morning after</h2>
+
+                    <p>
+                        A few minutes later, I had three commits and a merged pull request. The feature was a Lorem Ipsum
+                        generator: four sizes, random paragraphs truncated at sentence boundaries while always
+                        keeping at least two sentences, and a copy-to-clipboard button. The agent had created the
+                        page, added a dedicated stylesheet, put the JavaScript in <code>assets/js/</code>, and
+                        linked the card under "Software" in <code>tools.html</code>. The diff looked like something
+                        I would have written on a good day.
+                    </p>
+
+                    <p>
+                        What surprised me was not that the code worked. It was that the structure matched. The
+                        skill had turned a vague request into a checklist, and the checklist had survived contact
+                        with an autonomous loop. The agent did not just produce a page; it produced the page this
+                        site would have asked for.
+                    </p>
+
+                    <h2>What actually worked</h2>
+
+                    <ul>
+                        <li>
+                            <strong>Small scope.</strong> One issue per iteration meant one focused change per
+                            commit. There was never a fifty-file diff to untangle in the morning.
+                        </li>
+                        <li>
+                            <strong>An explicit stop condition.</strong> The run knew when it was finished, so it
+                            did not keep inventing work to stay busy.
+                        </li>
+                        <li>
+                            <strong>Reusable instructions.</strong> The skill is the difference between a one-off
+                            demo and a repeatable process. Writing it took less time than reviewing a messy
+                            generated page would have.
+                        </li>
+                        <li>
+                            <strong>Reviewable output.</strong> One branch per batch, one feature per commit, and a
+                            pull request at the end. The human review step never disappeared.
+                        </li>
+                    </ul>
+
+                    <h2>What this is not</h2>
+
+                    <p>
+                        I want to be honest about the limits, because the interesting part of this experiment is
+                        also the part that keeps it small.
+                    </p>
+
+                    <ul>
+                        <li>
+                            <strong>No tests and no CI.</strong> The generated tool is checked by opening it in a
+                            browser, not by a test suite.
+                        </li>
+                        <li>
+                            <strong>No concurrency control.</strong> Two runs at the same time would collide on the
+                            same branch and the same issues.
+                        </li>
+                        <li>
+                            <strong>No cost tracking.</strong> I did not measure tokens, time, or money. For a
+                            personal project with a handful of issues, that felt acceptable; for anything larger,
+                            it would not be.
+                        </li>
+                        <li>
+                            <strong>No automatic merge.</strong> A human still reads the diff and decides. That is
+                            deliberate.
+                        </li>
+                        <li>
+                            <strong>A few rough edges.</strong> The clipboard API needs a secure context, the shell
+                            loop can stop early if a push fails, and the marker file is a very simple way to
+                            communicate "done".
+                        </li>
+                    </ul>
+
+                    <p>
+                        None of these are surprising. They are the normal gaps between a fun experiment and a
+                        system you would trust with anything important.
+                    </p>
+
+                    <h2>Closing thoughts</h2>
+
+                    <p>
+                        So, what is this? It is a very basic experiment for a personal project. There is no
+                        orchestration platform, no dashboard, and no clever scheduler — just a shell script, two
+                        Markdown files, and an issue tracker doing double duty as a queue. I am not claiming it
+                        replaces anything or that it is ready for a team.
+                    </p>
+
+                    <p>
+                        But that is exactly why I like it. The barrier to trying an idea like this is now almost
+                        zero: a branch, a loop, and a few sentences of instructions. The result was a small,
+                        useful feature that I would otherwise have put off for another weekend. If the worst thing
+                        that happens is that I review a slightly odd diff over coffee, that is a pretty good trade.
+                    </p>
+
+                    <p>
+                        I am looking forward to the next five-minute experiment.
+                    </p>
+                </div>
+
+                <footer class="article-footer">
+                    <p>
+                        This article describes a personal experiment, not a production system. If you want to
+                        follow along, the code lives on
+                        <a href="https://github.com/lorenzo-piersante" target="_blank">GitHub</a>.
+                    </p>
+                    <a href="../articles.html" class="article-back">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back to articles
+                    </a>
+                </footer>
+            </article>
+        </div>
+
+        <aside class="right-sidebar">
+        </aside>
+    </main>
+</div>
+</body>
+</html>
