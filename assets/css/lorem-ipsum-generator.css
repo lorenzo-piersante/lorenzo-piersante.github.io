@@ -1,0 +1,63 @@
+.lorem-tool {
+    align-items: stretch;
+    text-align: left;
+    padding: 2rem;
+}
+
+.lorem-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+}
+
+.lorem-header h2 {
+    margin: 0;
+    color: #efefef;
+}
+
+.lorem-header p {
+    margin: 0;
+    color: #8b949e;
+}
+
+.lorem-size-options {
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+}
+
+.lorem-output {
+    background-color: #1b1b1e;
+    border: 1px dashed #30363d;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #efefef;
+    line-height: 1.7;
+    min-height: 120px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.lorem-output p {
+    margin: 0 0 1rem 0;
+}
+
+.lorem-output p:last-child {
+    margin-bottom: 0;
+}
+
+.lorem-copy-button {
+    align-self: center;
+}
+
+@media (max-width: 600px) {
+    .lorem-tool {
+        padding: 1.5rem 1rem;
+    }
+
+    .lorem-size-options {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
